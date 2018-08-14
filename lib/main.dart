@@ -5,6 +5,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import 'package:flutter/services.dart';
+
 //import 'package:path_provider/path_provider.dart';
 //import 'package:video_player/video_player.dart';
 
@@ -498,6 +501,8 @@ Future<Null> main() async {
   runApp(new CameraApp());
 }
 
+//DeviceOrientation deviceOrientation;
+
 class CameraApp extends StatefulWidget {
   @override
   _CameraAppState createState() => new _CameraAppState();
@@ -509,6 +514,14 @@ class _CameraAppState extends State<CameraApp> {
   @override
   void initState() {
     super.initState();
+
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+//      DeviceOrientation.portraitDown,
+//      DeviceOrientation.landscapeRight,
+//      DeviceOrientation.landscapeLeft,
+    ]);
+
     controller = new CameraController(cameras[1], ResolutionPreset.high);
     controller.initialize().then((_) {
       if (!mounted) {
@@ -533,7 +546,7 @@ class _CameraAppState extends State<CameraApp> {
     }
     return new AspectRatio(
         aspectRatio: controller.value.aspectRatio,
-         child: new CameraPreview(controller));
+        child: new CameraPreview(controller));
 
 //        child: Column(
 //            crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,6 +560,5 @@ class _CameraAppState extends State<CameraApp> {
 //            ),
 //          ],
 //        )
-
   }
 }
