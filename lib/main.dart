@@ -4,9 +4,11 @@ import 'package:camera/camera.dart';
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+
 
 import 'package:flutter/services.dart';
+
+//import 'package:flutter/';
 
 //import 'package:path_provider/path_provider.dart';
 //import 'package:video_player/video_player.dart';
@@ -495,13 +497,7 @@ import 'package:flutter/services.dart';
 /////////////////////////////////////////////////
 
 List<CameraDescription> cameras;
-
-Future<Null> main() async {
-  cameras = await availableCameras();
-  runApp(new CameraApp());
-}
-
-//DeviceOrientation deviceOrientation;
+bool isLightOn = false;
 
 class CameraApp extends StatefulWidget {
   @override
@@ -511,15 +507,87 @@ class CameraApp extends StatefulWidget {
 class _CameraAppState extends State<CameraApp> {
   CameraController controller;
 
+  FloatingActionButton floatingActionButton = new FloatingActionButton(
+    onPressed: isLightOnStatus,
+    backgroundColor: Colors.lightBlue,
+  );
+
+  static bool isLightOnStatus() {
+    if (isLightOn == false) {
+      isLightOn = true;
+    }
+    return false;
+  }
+
+  Widget exposition() {
+    return Stack(
+      alignment: FractionalOffset.center,
+      children: <Widget>[
+        new AspectRatio(
+          aspectRatio: controller.value.aspectRatio,
+          child: CameraPreview(controller),
+        ),
+        Container(
+          alignment: Alignment.bottomCenter,
+          child: floatingActionButton,
+        ),
+      ],
+    );
+  }
+
+  Widget lightedExposition() {
+    return Container(
+      padding: EdgeInsets.all(25.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5.0),
+        color: Colors.white,
+      ),
+      // color: Colors.white,
+      child: exposition(),
+    );
+  }
+
+  Widget screenView(bool isLightOn) {
+    if (isLightOn) {
+      setState(() {
+        lightedExposition();
+      });
+    }
+    return exposition();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //return screenView(isLightOn);
+    return lightedExposition();
+    //return screenView(isLightOn);
+
+//    setState(() {
+//      screenView(isLightOn);
+//    });
+//    return screenView(isLightOn);
+
+//    return Stack(
+//      alignment: FractionalOffset.center,
+//      children: <Widget>[
+//        new AspectRatio(
+//          aspectRatio: controller.value.aspectRatio,
+//          child: CameraPreview(controller),
+//        ),
+//        Container(
+//          alignment: Alignment.bottomCenter,
+//          child: floatingActionButton,
+//        ),
+//      ],
+//    );
+  }
+
   @override
   void initState() {
     super.initState();
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-//      DeviceOrientation.portraitDown,
-//      DeviceOrientation.landscapeRight,
-//      DeviceOrientation.landscapeLeft,
     ]);
 
     controller = new CameraController(cameras[1], ResolutionPreset.high);
@@ -536,29 +604,17 @@ class _CameraAppState extends State<CameraApp> {
     controller?.dispose();
     super.dispose();
   }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!controller.value.isInitialized) {
-      return new Container(
-        child: Center(),
-      );
-    }
-    return new AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: new CameraPreview(controller));
-
-//        child: Column(
-//            crossAxisAlignment: CrossAxisAlignment.start,
-//          children: [
-//            Container(
-//              child: new CameraPreview(controller),
-//            ),
-//            FloatingActionButton(
-//              onPressed: null,
-//              child: Icon(Icons.blur_on),
-//            ),
-//          ],
-//        )
-  }
 }
+
+void main() async {
+  // Fetch the available cameras before initializing the app.
+  try {
+    cameras = await availableCameras();
+  } on CameraException catch (e) {
+    logError(e.code, e.description);
+  }
+  runApp(new CameraApp());
+}
+
+void logError(String code, String message) =>
+    print('Error: $code\nError Message: $message');
