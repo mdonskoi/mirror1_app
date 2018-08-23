@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:screen/screen.dart';
 
 import 'dart:async';
 import 'dart:io';
-
-
 
 import 'package:flutter/services.dart';
 
@@ -496,100 +495,135 @@ import 'package:flutter/services.dart';
 
 /////////////////////////////////////////////////
 
+//List<CameraDescription> cameras;
+
 List<CameraDescription> cameras;
+double brightness;
+
+void main() async {
+  // Fetch the available cameras before initializing the app.
+  // double brightness = await Screen.brightness;
+  brightness = await Screen.brightness;
+  try {
+    cameras = await availableCameras();
+  } on CameraException catch (e) {
+    logError(e.code, e.description);
+  }
+  runApp(new MyApp());
+
+//  bool keptOn = await Screen.isKeptOn;
+}
+
+CameraController controller;
 bool isLightOn = false;
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+      title: 'Flutter Demo',
+      theme: new ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: Scaffold(
+        body: Center(child: CameraApp()
+            //CameraPreview(controller),
+            ),
+      ),
+      //new CameraPreview(controller),
+    );
+  }
+}
 
 class CameraApp extends StatefulWidget {
   @override
-  _CameraAppState createState() => new _CameraAppState();
+  CameraAppState createState() => new CameraAppState();
 }
 
-class _CameraAppState extends State<CameraApp> {
+class CameraAppState extends State<CameraApp> {
   CameraController controller;
+  bool _isLightOn = false;
 
-  FloatingActionButton floatingActionButton = new FloatingActionButton(
-    onPressed: isLightOnStatus,
-    backgroundColor: Colors.lightBlue,
-  );
+//  bool _isKeptOn = false;
 
-  static bool isLightOnStatus() {
-    if (isLightOn == false) {
-      isLightOn = true;
-    }
-    return false;
+  void _lightToggle() {
+    setState(() {
+      if (!_isLightOn) {
+        _isLightOn = true;
+        lightedExposition();
+      } else {
+        _isLightOn = false;
+        exposition();
+      }
+    });
   }
 
   Widget exposition() {
-    return Stack(
-      alignment: FractionalOffset.center,
-      children: <Widget>[
-        new AspectRatio(
-          aspectRatio: controller.value.aspectRatio,
-          child: CameraPreview(controller),
-        ),
-        Container(
-          alignment: Alignment.bottomCenter,
-          child: floatingActionButton,
-        ),
-      ],
+    Screen.setBrightness(brightness);
+    return Container(
+      child: CameraPreview(controller),
     );
   }
 
   Widget lightedExposition() {
-    return Container(
-      padding: EdgeInsets.all(25.0),
+    Screen.setBrightness(1.0);
+    //todo: Set initial brightness when close app
+
+    return new Container(
+      padding: EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5.0),
+        // borderRadius: BorderRadius.circular(15.0),
         color: Colors.white,
       ),
       // color: Colors.white,
-      child: exposition(),
+      child: new AspectRatio(
+        aspectRatio: controller.value.aspectRatio,
+        child: new CameraPreview(controller),
+      ),
     );
-  }
-
-  Widget screenView(bool isLightOn) {
-    if (isLightOn) {
-      setState(() {
-        lightedExposition();
-      });
-    }
-    return exposition();
   }
 
   @override
   Widget build(BuildContext context) {
-    //return screenView(isLightOn);
-    return lightedExposition();
-    //return screenView(isLightOn);
+    return new MaterialApp(
+      title: 'Flutter Demo',
+      theme: new ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: Scaffold(
+        body: Center(
+          child:
+//          AnimatedCrossFade(
+//            duration: Duration(milliseconds: 500),
+//            firstChild: lightedExposition(),
+//            secondChild: exposition(),
+//            alignment: Alignment.center,
+//            crossFadeState: _isLightOn
+//                ? CrossFadeState.showFirst
+//                : CrossFadeState.showSecond,
+//          ),
 
-//    setState(() {
-//      screenView(isLightOn);
-//    });
-//    return screenView(isLightOn);
+            _isLightOn ? lightedExposition() : exposition()
 
-//    return Stack(
-//      alignment: FractionalOffset.center,
-//      children: <Widget>[
-//        new AspectRatio(
-//          aspectRatio: controller.value.aspectRatio,
-//          child: CameraPreview(controller),
-//        ),
-//        Container(
-//          alignment: Alignment.bottomCenter,
-//          child: floatingActionButton,
-//        ),
-//      ],
-//    );
+
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _lightToggle,
+          backgroundColor: Colors.transparent, //or use transparent
+          child: Icon(Icons.blur_on),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
+    );
   }
 
   @override
   void initState() {
     super.initState();
-
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-
     controller = new CameraController(cameras[1], ResolutionPreset.high);
     controller.initialize().then((_) {
       if (!mounted) {
@@ -604,16 +638,6 @@ class _CameraAppState extends State<CameraApp> {
     controller?.dispose();
     super.dispose();
   }
-}
-
-void main() async {
-  // Fetch the available cameras before initializing the app.
-  try {
-    cameras = await availableCameras();
-  } on CameraException catch (e) {
-    logError(e.code, e.description);
-  }
-  runApp(new CameraApp());
 }
 
 void logError(String code, String message) =>
