@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:screen/screen.dart';
+import 'package:flutter/animation.dart';
 
 import 'dart:async';
 import 'dart:io';
@@ -499,6 +500,8 @@ import 'package:flutter/services.dart';
 
 List<CameraDescription> cameras;
 double brightness;
+double timeDilation;
+CameraController controller;
 
 void main() async {
   // Fetch the available cameras before initializing the app.
@@ -510,15 +513,13 @@ void main() async {
     logError(e.code, e.description);
   }
   runApp(new MyApp());
-
-//  bool keptOn = await Screen.isKeptOn;
 }
 
-CameraController controller;
 bool isLightOn = false;
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+//
+//   This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
@@ -562,7 +563,12 @@ class CameraAppState extends State<CameraApp> {
   Widget exposition() {
     Screen.setBrightness(brightness);
     return Container(
-      child: CameraPreview(controller),
+      // padding: EdgeInsets.all(0.5),/////////////
+
+     child: CameraPreview(controller),
+
+      //child: buildCameraView(),
+
     );
   }
 
@@ -577,37 +583,48 @@ class CameraAppState extends State<CameraApp> {
         color: Colors.white,
       ),
       // color: Colors.white,
-      child: new AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: new CameraPreview(controller),
-      ),
+
+      child: buildCameraView(),
+
+
+//      child: new AspectRatio(
+//        aspectRatio: controller.value.aspectRatio,
+//        child: new CameraPreview(controller),
+//      ),
+
+
+
+
     );
   }
 
   @override
   Widget build(BuildContext context) {
+
+
     return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        primarySwatch: Colors.blue,
+
+      home: new Scaffold(
+      body: new Stack(
+        children: <Widget>[
+          (!controller.value.isInitialized) ? new Container() : buildCameraView(),
+      new AnimatedCrossFade(
+            duration: Duration(milliseconds: 500),
+            firstChild: lightedExposition(),
+            secondChild: buildCameraView(),
+            alignment: Alignment.center,
+            crossFadeState: !_isLightOn
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+          ),
+
+
+
+
+          // ---On top of Camera view add one mroe widget---
+        ],
+
       ),
-      home: Scaffold(
-        body: Center(
-          child:
-//          AnimatedCrossFade(
-//            duration: Duration(milliseconds: 500),
-//            firstChild: lightedExposition(),
-//            secondChild: exposition(),
-//            alignment: Alignment.center,
-//            crossFadeState: _isLightOn
-//                ? CrossFadeState.showFirst
-//                : CrossFadeState.showSecond,
-//          ),
-
-            _isLightOn ? lightedExposition() : exposition()
-
-
-        ),
         floatingActionButton: FloatingActionButton(
           onPressed: _lightToggle,
           backgroundColor: Colors.transparent, //or use transparent
@@ -615,8 +632,50 @@ class CameraAppState extends State<CameraApp> {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
+
+
     );
+
+
+
+
+
+
+
+
+
+//    return new MaterialApp(
+//      title: 'Flutter Demo',
+//      theme: new ThemeData(
+//        primarySwatch: Colors.blue,
+//      ),
+//      home: Scaffold(
+//        body: Center(
+//            child:
+////         new AnimatedCrossFade(
+////            duration: Duration(milliseconds: 500),
+////            firstChild: lightedExposition(),
+////            secondChild: exposition(),
+////            alignment: Alignment.center,
+////            crossFadeState: !_isLightOn
+////                ? CrossFadeState.showSecond
+////                : CrossFadeState.showFirst,
+////          ),
+//
+//                _isLightOn ? lightedExposition() : exposition()
+//
+//        ),
+//        floatingActionButton: FloatingActionButton(
+//          onPressed: _lightToggle,
+//          backgroundColor: Colors.transparent, //or use transparent
+//          child: Icon(Icons.blur_on),
+//        ),
+//        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+//      ),
+//    );
   }
+
+
 
   @override
   void initState() {
@@ -625,6 +684,9 @@ class CameraAppState extends State<CameraApp> {
       DeviceOrientation.portraitUp,
     ]);
     controller = new CameraController(cameras[1], ResolutionPreset.high);
+
+    // (!controller.value.isInitialized) ? new Container() : buildCameraView(context);
+
     controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -633,11 +695,29 @@ class CameraAppState extends State<CameraApp> {
     });
   }
 
-  @override
-  void dispose() {
-    controller?.dispose();
-    super.dispose();
+  Widget buildCameraView() {
+    return new Container(
+      child: new Row(
+        children: [
+          new Expanded(
+            child: new Column(
+              children: <Widget>[
+                new AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
+                  child: new CameraPreview(controller),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
+//  @override
+//  void dispose() {
+//    controller?.dispose();
+//    super.dispose();
+//  }
 }
 
 void logError(String code, String message) =>
