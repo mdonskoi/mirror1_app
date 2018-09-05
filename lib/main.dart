@@ -502,10 +502,11 @@ List<CameraDescription> cameras;
 double brightness;
 double timeDilation;
 CameraController controller;
+//double minPadding = 0.0;
+//double maxPadding = 5.0;
+Duration duration = new Duration(milliseconds: 400);
 
 void main() async {
-  // Fetch the available cameras before initializing the app.
-  // double brightness = await Screen.brightness;
   brightness = await Screen.brightness;
   try {
     cameras = await availableCameras();
@@ -518,21 +519,13 @@ void main() async {
 bool isLightOn = false;
 
 class MyApp extends StatelessWidget {
-//
 //   This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        primarySwatch: Colors.blue,
-      ),
       home: Scaffold(
-        body: Center(child: CameraApp()
-            //CameraPreview(controller),
-            ),
+        body: Center(child: CameraApp()),
       ),
-      //new CameraPreview(controller),
     );
   }
 }
@@ -542,144 +535,60 @@ class CameraApp extends StatefulWidget {
   CameraAppState createState() => new CameraAppState();
 }
 
-class CameraAppState extends State<CameraApp> {
+class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
   CameraController controller;
-  bool _isLightOn = false;
-
-//  bool _isKeptOn = false;
-
   void _lightToggle() {
-    setState(() {
-      if (!_isLightOn) {
-        _isLightOn = true;
-        lightedExposition();
-      } else {
-        _isLightOn = false;
-        exposition();
-      }
-    });
+    final status = _animationController.status;
+    if (status == AnimationStatus.completed) {
+      _animationController.reverse();
+      Screen.setBrightness(brightness);
+    } else {
+      _animationController.animateTo(
+        30.0,
+      );
+      Screen.setBrightness(1.0);
+    }
   }
 
-  Widget exposition() {
-    Screen.setBrightness(brightness);
-    return Container(
-      // padding: EdgeInsets.all(0.5),/////////////
-
-     child: CameraPreview(controller),
-
-      //child: buildCameraView(),
-
-    );
-  }
-
-  Widget lightedExposition() {
-    Screen.setBrightness(1.0);
-    //todo: Set initial brightness when close app
-
-    return new Container(
-      padding: EdgeInsets.all(28.0),
-      decoration: BoxDecoration(
-        // borderRadius: BorderRadius.circular(15.0),
-        color: Colors.white,
-      ),
-      // color: Colors.white,
-
-      child: buildCameraView(),
-
-
-//      child: new AspectRatio(
-//        aspectRatio: controller.value.aspectRatio,
-//        child: new CameraPreview(controller),
-//      ),
-
-
-
-
-    );
-  }
-
+  AnimationController _animationController;
   @override
   Widget build(BuildContext context) {
-
-
     return new MaterialApp(
-
-      home: new Scaffold(
-      body: new Stack(
-        children: <Widget>[
-          (!controller.value.isInitialized) ? new Container() : buildCameraView(),
-      new AnimatedCrossFade(
-            duration: Duration(milliseconds: 500),
-            firstChild: lightedExposition(),
-            secondChild: buildCameraView(),
-            alignment: Alignment.center,
-            crossFadeState: !_isLightOn
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+      home: Scaffold(
+        body: Center(
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return Padding(
+                padding: EdgeInsets.all(_animationController.value),
+                child: child,
+              );
+            },
+            child: CameraPreview(controller),
           ),
-
-
-
-
-          // ---On top of Camera view add one mroe widget---
-        ],
-
-      ),
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: _lightToggle,
-          backgroundColor: Colors.transparent, //or use transparent
+          backgroundColor: Colors.transparent,
           child: Icon(Icons.blur_on),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
-
-
     );
-
-
-
-
-
-
-
-
-
-//    return new MaterialApp(
-//      title: 'Flutter Demo',
-//      theme: new ThemeData(
-//        primarySwatch: Colors.blue,
-//      ),
-//      home: Scaffold(
-//        body: Center(
-//            child:
-////         new AnimatedCrossFade(
-////            duration: Duration(milliseconds: 500),
-////            firstChild: lightedExposition(),
-////            secondChild: exposition(),
-////            alignment: Alignment.center,
-////            crossFadeState: !_isLightOn
-////                ? CrossFadeState.showSecond
-////                : CrossFadeState.showFirst,
-////          ),
-//
-//                _isLightOn ? lightedExposition() : exposition()
-//
-//        ),
-//        floatingActionButton: FloatingActionButton(
-//          onPressed: _lightToggle,
-//          backgroundColor: Colors.transparent, //or use transparent
-//          child: Icon(Icons.blur_on),
-//        ),
-//        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-//      ),
-//    );
   }
-
-
 
   @override
   void initState() {
     super.initState();
+
+    _animationController = AnimationController(
+      value: 0.0,
+      lowerBound: 0.0,
+      upperBound: 25.0,
+      duration: duration,
+      vsync: this,
+    );
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -695,29 +604,11 @@ class CameraAppState extends State<CameraApp> {
     });
   }
 
-  Widget buildCameraView() {
-    return new Container(
-      child: new Row(
-        children: [
-          new Expanded(
-            child: new Column(
-              children: <Widget>[
-                new AspectRatio(
-                  aspectRatio: controller.value.aspectRatio,
-                  child: new CameraPreview(controller),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
-//  @override
-//  void dispose() {
-//    controller?.dispose();
-//    super.dispose();
-//  }
 }
 
 void logError(String code, String message) =>
