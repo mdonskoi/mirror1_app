@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 
 //import 'package:flutter/';
 
@@ -502,9 +503,11 @@ List<CameraDescription> cameras;
 double brightness;
 double timeDilation;
 CameraController controller;
-//double minPadding = 0.0;
-//double maxPadding = 5.0;
-Duration duration = new Duration(milliseconds: 400);
+double minPadding = 0.0;
+double maxPadding = 30.0;
+Duration duration = new Duration(milliseconds: 300);
+
+MediaQueryData queryData;
 
 void main() async {
   brightness = await Screen.brightness;
@@ -553,6 +556,7 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
   AnimationController _animationController;
   @override
   Widget build(BuildContext context) {
+    queryData = MediaQuery.of(context);
     return new MaterialApp(
       home: Scaffold(
         body: Center(
@@ -561,10 +565,15 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
             builder: (context, child) {
               return Padding(
                 padding: EdgeInsets.all(_animationController.value),
-                child: child,
+                child: new Center(
+
+                  child: AspectRatio(aspectRatio: 8.9/16, //todo fetch aspect ratio
+                  child: new CameraPreview(controller),)
+
+                ),
               );
             },
-            child: CameraPreview(controller),
+             //child: buildCameraView(),
           ),
         ),
         floatingActionButton: FloatingActionButton(
@@ -582,9 +591,9 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
     super.initState();
 
     _animationController = AnimationController(
-      value: 0.0,
-      lowerBound: 0.0,
-      upperBound: 25.0,
+      value: minPadding,
+      lowerBound: minPadding,
+      upperBound: maxPadding,
       duration: duration,
       vsync: this,
     );
@@ -594,14 +603,39 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
     ]);
     controller = new CameraController(cameras[1], ResolutionPreset.high);
 
-    // (!controller.value.isInitialized) ? new Container() : buildCameraView(context);
-
     controller.initialize().then((_) {
       if (!mounted) {
         return;
       }
       setState(() {});
     });
+  }
+
+//  Widget buildResponsiveCameraView() {
+//    queryData = MediaQuery.of(context);
+//
+//    return new LayoutBuilder(builder: controller)
+//
+//
+//
+////    AspectRatio(
+////      aspectRatio: controller.value.aspectRatio,
+////      child: new CameraPreview(controller),
+////    );
+//  }
+
+  Widget buildCameraView() {
+    return new CameraPreview(controller);
+
+//    queryData = MediaQuery.of(context);
+//    return  new Transform.scale(
+//        //scale: 1 / controller.value.aspectRatio,
+//      scale: 1.0,
+//        child: new Center(
+//          child: new AspectRatio(
+//              aspectRatio: controller.value.aspectRatio,
+//              child: new CameraPreview(controller)),
+//        ));
   }
 
   @override
