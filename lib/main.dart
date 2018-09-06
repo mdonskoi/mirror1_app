@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:screen/screen.dart';
 import 'package:flutter/animation.dart';
-
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart'; // use it?
 
 List<CameraDescription> cameras;
 double brightness;
@@ -16,9 +11,7 @@ CameraController controller;
 double minPadding = 0.0;
 double maxPadding = 30.0;
 Duration duration = new Duration(milliseconds: 400);
-
 Key key;
-
 MediaQueryData queryData;
 
 void main() async {
@@ -56,30 +49,11 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
 
     if (status == AnimationStatus.completed) {
       _animationController.reverse();
-
-      Screen.setBrightness(brightness);
+      _lightAnimationController.reverse();
     } else {
-      _animationController.animateTo(
-        30.0,
-      );
-      Screen.setBrightness(_lightAnimationController.value);
+      _animationController.animateTo(30.0);
+      _lightAnimationController.animateTo(1.0);
     }
-//    new AnimatedCrossFade(
-//      duration:  Duration(seconds: 1),
-//      firstChild: maximumBrightness(),
-//      secondChild: defaultBrightness(),
-//      crossFadeState: status != AnimationStatus.completed ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-//    );
-  }
-
-  Widget defaultBrightness() {
-    Screen.setBrightness(brightness);
-    return Container();
-  }
-
-  Widget maximumBrightness() {
-    Screen.setBrightness(1.0);
-    return Container();
   }
 
   AnimationController _animationController;
@@ -88,7 +62,6 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     queryData = MediaQuery.of(context);
-    // bool isLightOn;
 
     return new MaterialApp(
       home: Scaffold(
@@ -97,10 +70,9 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
           child: AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
+              Screen.setBrightness(_lightAnimationController.value);
               return new Padding(
                 padding: EdgeInsets.all(_animationController.value),
-                //child: CameraPreview(controller),
-
                 child: Center(
                   child: AspectRatio(
                     aspectRatio: queryData.size.width / queryData.size.height,
@@ -109,8 +81,6 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
                 ),
               );
             },
-
-            //child: buildCameraView(),
           ),
         ),
         floatingActionButton: FloatingActionButton(
