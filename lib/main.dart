@@ -10,7 +10,7 @@ double timeDilation;
 CameraController controller;
 double minPadding = 0.0;
 double maxPadding = 30.0;
-Duration duration = new Duration(milliseconds: 400);
+Duration duration = Duration(milliseconds: 400);
 Key key;
 MediaQueryData queryData;
 
@@ -24,11 +24,11 @@ void main() async {
   runApp(new MyApp());
 }
 
-class MyApp extends StatelessWidget {
-//   This widget is the root of your application.
+class MyApp extends StatelessWidget {       // todo add necessary comments
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(child: CameraApp()),
       ),
@@ -42,7 +42,10 @@ class CameraApp extends StatefulWidget {
 }
 
 class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
+
   CameraController controller;
+  AnimationController _animationController;
+  AnimationController _lightAnimationController;
 
   void _lightToggle() {
     final status = _animationController.status;
@@ -56,14 +59,13 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
     }
   }
 
-  AnimationController _animationController;
-  AnimationController _lightAnimationController;
 
   @override
   Widget build(BuildContext context) {
     queryData = MediaQuery.of(context);
 
     return new MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Container(
           key: key,
