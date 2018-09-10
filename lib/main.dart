@@ -11,8 +11,10 @@ CameraController controller;
 double minPadding = 0.0;
 double maxPadding = 30.0;
 Duration duration = Duration(milliseconds: 400);
-Key key;
+//Key key;
 MediaQueryData queryData;
+double screenAspectRatio;
+
 
 void main() async {
   brightness = await Screen.brightness;
@@ -41,6 +43,8 @@ class CameraApp extends StatefulWidget {
   CameraAppState createState() => new CameraAppState();
 }
 
+
+
 class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
 
   CameraController controller;
@@ -64,12 +68,15 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     queryData = MediaQuery.of(context);
 
+    screenAspectRatio = queryData.size.width / queryData.size.height;
+
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Container(
-          key: key,
-          child: AnimatedBuilder(
+       //   key: key,
+          child:
+            AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
               Screen.setBrightness(_lightAnimationController.value);
@@ -77,7 +84,8 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
                 padding: EdgeInsets.all(_animationController.value),
                 child: Center(
                   child: AspectRatio(
-                    aspectRatio: queryData.size.width / queryData.size.height,
+                    aspectRatio: screenAspectRatio,
+//                    aspectRatio: queryData.size.width / queryData.size.height,
                     child: CameraPreview(controller),
                   ),
                 ),
@@ -85,6 +93,7 @@ class CameraAppState extends State<CameraApp> with TickerProviderStateMixin {
             },
           ),
         ),
+
         floatingActionButton: FloatingActionButton(
           onPressed: _lightToggle,
           backgroundColor: Colors.transparent,
